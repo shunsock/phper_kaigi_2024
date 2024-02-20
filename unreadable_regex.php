@@ -8,7 +8,8 @@ class unreadable_regex
     {
         // stringなので全角か半角かがわからない
         // フォーマットが複数あるので if, forで対応
-        $regex = '/^([0-9０-９]{3,4}-?){3}$/u';
+        // \dは言語ごとに仕様が違うので、非推奨
+        $regex = '/^([\d]{3,4}-?){3}$/';
         if (preg_match($regex, $phoneNumber) === false) {
             throw new InvalidArgumentException("Invalid phone number format");
         }
