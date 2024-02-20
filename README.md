@@ -17,4 +17,5 @@ This is an example of a readable regex  for PHPerKaigi 2024.
 ```
 
 ## Presentation Slide
-https://www.canva.com/design/DAF9IPmoHMM/Y40JL-jOOGwSE89vT9mytg/view
+![](PHPerKaigi2024_Readable_Regex.jpg)
+link: [PHPerKaigi2024_Readable_Regex](https://www.canva.com/design/DAF9IPmoHMM/Y40JL-jOOGwSE89vT9mytg/view)
