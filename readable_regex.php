@@ -2,30 +2,50 @@
 
 declare(strict_types=1);
 
+readonly class NormalizedInputPhoneNumber
+{
+    public string $value;
+
+    public function __construct(#[SensitiveParameter] string $phoneNumber)
+    {
+        $phoneNumberWithoutFullWidthDigit = mb_convert_kana($phoneNumber, 'n');
+
+        $normalizedInputPhoneNumber = preg_replace(
+            pattern: '/[^0-9\-]/',
+            replacement: '',
+            subject: $phoneNumberWithoutFullWidthDigit
+        );
+
+        $this->value = $normalizedInputPhoneNumber;
+    }
+}
+
 interface PhoneNumberInterface {
-    public static function isValidFormat(string $phoneNumber): bool;
+    public static function isValidFormat(NormalizedInputPhoneNumber $phoneNumber): bool;
 }
 
 readonly class MobilePhoneNumber implements PhoneNumberInterface
 {
     public string $phoneNumber;
 
-    public function __construct(#[SensitiveParameter] string $phoneNumber)
+    public function __construct(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber)
     {
         if (self::isValidFormat($phoneNumber) === false) {
             throw new InvalidArgumentException("Invalid phone number format");
         }
-        $this->phoneNumber = $phoneNumber;
+        $this->phoneNumber = $phoneNumber->value;
     }
 
     /**
-     * @param string $phoneNumber
+     * @param NormalizedInputPhoneNumber $phoneNumber
      * @return bool
      */
-    public static function isValidFormat(#[SensitiveParameter] string $phoneNumber): bool
+    public static function isValidFormat(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): bool
     {
+        // NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
+        // この関数は半角数字とハイフンの組み合わせだけを判断する
         $mobilePhoneNumberFormat = '/^[0-9]{3}\-[0-9]{4}\-[0-9]{4}$/';
-        $is_valid = preg_match($mobilePhoneNumberFormat, $phoneNumber);
+        $is_valid = preg_match($mobilePhoneNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
 }
@@ -33,22 +53,24 @@ readonly class MobilePhoneNumber implements PhoneNumberInterface
 readonly class ServiceProviderNumberFormat implements PhoneNumberInterface
 {
     public string $phoneNumber;
-    public function __construct(#[SensitiveParameter] string $phoneNumber)
+    public function __construct(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber)
     {
         if (self::isValidFormat($phoneNumber) === false) {
             throw new InvalidArgumentException("Invalid phone number format");
         }
-        $this->phoneNumber = $phoneNumber;
+        $this->phoneNumber = $phoneNumber->value;
     }
 
     /**
-     * @param string $phoneNumber
+     * @param NormalizedInputPhoneNumber $phoneNumber
      * @return bool
      */
-    public static function isValidFormat(#[SensitiveParameter] string $phoneNumber): bool
+    public static function isValidFormat(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): bool
     {
+        // NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
+        // この関数は半角数字とハイフンの組み合わせだけを判断する
         $serviceProviderNumberFormat = '/^[0-9]{4}\-[0-9]{3}\-[0-9]{3}$/';
-        $is_valid = preg_match($serviceProviderNumberFormat, $phoneNumber);
+        $is_valid = preg_match($serviceProviderNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
 }
@@ -61,29 +83,14 @@ readonly class PhoneNumberFactory
      */
     public static function createPhoneNumber(#[SensitiveParameter] string $phoneNumber): PhoneNumberInterface
     {
-        if (MobilePhoneNumber::isValidFormat($phoneNumber)) {
-            return new MobilePhoneNumber($phoneNumber);
+        $normalizedPhoneNumber = new NormalizedInputPhoneNumber($phoneNumber);
+        if (MobilePhoneNumber::isValidFormat($normalizedPhoneNumber)) {
+            return new MobilePhoneNumber($normalizedPhoneNumber);
         }
-        if (ServiceProviderNumberFormat::isValidFormat($phoneNumber)) {
-            return new ServiceProviderNumberFormat($phoneNumber);
+        if (ServiceProviderNumberFormat::isValidFormat($normalizedPhoneNumber)) {
+            return new ServiceProviderNumberFormat($normalizedPhoneNumber);
         }
-        throw new InvalidArgumentException("Invalid phone number format: ". $phoneNumber);
-    }
-}
-
-readonly class PhoneNumberNormalizer
-{
-    /**
-     * @param string $phoneNumber
-     * @return string
-     */
-    public static function normalizePhoneNumber(#[SensitiveParameter] string $phoneNumber): string
-    {
-        // Convert full-width digits to half-width
-        $phoneNumberWithoutFullWidthDigit = mb_convert_kana($phoneNumber, 'n');
-
-        // Remove any non-digit characters
-        return preg_replace('/[^0-9\-]/', '', $phoneNumberWithoutFullWidthDigit);
+        throw new InvalidArgumentException("error (check your input): ". $phoneNumber);
     }
 }
 
@@ -94,12 +101,11 @@ $valid_case = [
 ];
 
 for ($i = 0, $iMax = count($valid_case); $i < $iMax; $i++) {
-    $normalizedPhoneNumber = PhoneNumberNormalizer::normalizePhoneNumber($valid_case[$i]);
     try {
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
-        echo "[matched] Valid case: " . $phoneNumber->phoneNumber . "\n";
+        $phoneNumber = PhoneNumberFactory::createPhoneNumber($valid_case[$i]);
+        echo "[ok] valid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
-        echo "[not matched] " . $e->getMessage() . "\n";
+        echo "[fail] valid case did not matched: " . $e->getMessage() . "\n";
     }
 }
 
@@ -107,14 +113,14 @@ $invalid_case = [
     "0000-0000-0000",
     "0000000000",
     "000-000-000",
+    "0000-000-000-",
 ];
 
 for ($i = 0, $iMax = count($invalid_case); $i < $iMax; $i++) {
     try {
-        $normalizedPhoneNumber = PhoneNumberNormalizer::normalizePhoneNumber($invalid_case[$i]);
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
-        echo "[matched] Invalid case: " . $phoneNumber->phoneNumber . "\n";
+        $phoneNumber = PhoneNumberFactory::createPhoneNumber($invalid_case[$i]);
+        echo "[fail] invalid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
-        echo "[not matched] " . $e->getMessage() . "\n";
+        echo "[ok] invalid case did not matched: " . $e->getMessage() . "\n";
     }
 }
