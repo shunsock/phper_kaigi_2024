@@ -25,17 +25,14 @@ readonly class NormalizedInputPhoneNumber
 
     public function __construct(#[SensitiveParameter] ValidatedInputPhoneNumber $phoneNumber)
     {
+        // 入力には全角数字とハイフン, 半角数字のハイフンのみが許可されている
         // 全角数字を半角数字に変換 (例: ０ -> 0)
-        // 厳密には異なるので注意
+        // mb_convert_kanaは機能が多いため, 今回は半角数字に変換するnだけを使う
         $phoneNumberWithoutFullWidthDigit = mb_convert_kana($phoneNumber->value, 'n');
 
-        $normalizedInputPhoneNumber = preg_replace(
-            pattern: '/[^0-9\-]/',
-            replacement: '',
-            subject: $phoneNumberWithoutFullWidthDigit
-        );
+        $phoneNumberWithoutFullwidthHyphen = str_replace('ー', '', $phoneNumberWithoutFullWidthDigit);
 
-        $this->value = $normalizedInputPhoneNumber;
+        $this->value = $phoneNumberWithoutFullwidthHyphen;
     }
 }
 
@@ -67,7 +64,7 @@ readonly class MobilePhoneNumber implements PhoneNumberInterface
     {
         // [good] NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
         // [good] この関数は半角数字とハイフンの並び順だけを判断する
-        $mobilePhoneNumberFormat = '/^[0-9]{3}\-[0-9]{4}\-[0-9]{4}$/';
+        $mobilePhoneNumberFormat = '/^[0-9]{3}-[0-9]{4}-[0-9]{4}$/';
         $is_valid = preg_match($mobilePhoneNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
@@ -76,6 +73,7 @@ readonly class MobilePhoneNumber implements PhoneNumberInterface
 readonly class ServiceProviderNumber implements PhoneNumberInterface
 {
     public string $phoneNumber;
+
     public function __construct(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber)
     {
         if (self::matchFormat($phoneNumber) === false) {
@@ -92,7 +90,7 @@ readonly class ServiceProviderNumber implements PhoneNumberInterface
     {
         // [good] NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
         // [good] この関数は半角数字とハイフンの並び順だけを判断する
-        $serviceProviderNumberFormat = '/^[0-9]{4}\-[0-9]{3}\-[0-9]{3}$/';
+        $serviceProviderNumberFormat = '/^[0-9]{4}-[0-9]{3}-[0-9]{3}$/';
         $is_valid = preg_match($serviceProviderNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
@@ -104,7 +102,7 @@ readonly class PhoneNumberFactory
      * @param NormalizedInputPhoneNumber $phoneNumber
      * @return MobilePhoneNumber|ServiceProviderNumber
      */
-    public static function createPhoneNumber(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): MobilePhoneNumber|ServiceProviderNumber
+    public static function create(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): MobilePhoneNumber|ServiceProviderNumber
     {
         // [good] regexを確認するUnitな関数を並べておくとテストしやすい
         // (補足) function(function(function(string text)))のようにネストするとテストが難しい
@@ -126,7 +124,7 @@ foreach ($test_cases->valid_case as $phoneNumberTestCase) {
         // [good] 半角数字だけで構成されていることを保証 => 電話番号のフォーマット確認の時に半角か全角かを気にしなくて良い
         $normalizedPhoneNumber = new NormalizedInputPhoneNumber($validatedPhoneNumber);
         // [good] 半角英数字とハイフンのみの並び方だけを確認する
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
+        $phoneNumber = PhoneNumberFactory::create($normalizedPhoneNumber);
         echo "[ok] valid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
         echo "[fail] valid case did not matched: " . $e->getMessage() . "\n";
@@ -141,7 +139,7 @@ foreach ($test_cases->invalid_case as $phoneNumberTestCase) {
         // [good] 半角数字だけで構成されていることを保証 => 電話番号のフォーマット確認の時に半角か全角かを気にしなくて良い
         $normalizedPhoneNumber = new NormalizedInputPhoneNumber($validatedPhoneNumber);
         // [good] 半角英数字とハイフンのみの並び方だけを確認する
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
+        $phoneNumber = PhoneNumberFactory::create($normalizedPhoneNumber);
         echo "[fail] invalid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
         echo "[ok] invalid case did not matched: " . $e->getMessage() . "\n";

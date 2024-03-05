@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 readonly class TestCase
 {
     public array $valid_case;
