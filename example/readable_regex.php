@@ -124,7 +124,7 @@ foreach ($test_cases->valid_case as $phoneNumberTestCase) {
         // [good] 半角数字だけで構成されていることを保証 => 電話番号のフォーマット確認の時に半角か全角かを気にしなくて良い
         $normalizedPhoneNumber = new NormalizedInputPhoneNumber($validatedPhoneNumber);
         // [good] 半角英数字とハイフンのみの並び方だけを確認する
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
+        $phoneNumber = PhoneNumberFactory::create($normalizedPhoneNumber);
         echo "[ok] valid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
         echo "[fail] valid case did not matched: " . $e->getMessage() . "\n";
@@ -139,7 +139,7 @@ foreach ($test_cases->invalid_case as $phoneNumberTestCase) {
         // [good] 半角数字だけで構成されていることを保証 => 電話番号のフォーマット確認の時に半角か全角かを気にしなくて良い
         $normalizedPhoneNumber = new NormalizedInputPhoneNumber($validatedPhoneNumber);
         // [good] 半角英数字とハイフンのみの並び方だけを確認する
-        $phoneNumber = PhoneNumberFactory::createPhoneNumber($normalizedPhoneNumber);
+        $phoneNumber = PhoneNumberFactory::create($normalizedPhoneNumber);
         echo "[fail] invalid case matched: " . $phoneNumber->phoneNumber . "\n";
     } catch (InvalidArgumentException $e) {
         echo "[ok] invalid case did not matched: " . $e->getMessage() . "\n";
