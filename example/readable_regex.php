@@ -25,17 +25,14 @@ readonly class NormalizedInputPhoneNumber
 
     public function __construct(#[SensitiveParameter] ValidatedInputPhoneNumber $phoneNumber)
     {
+        // 入力には全角数字とハイフン, 半角数字のハイフンのみが許可されている
         // 全角数字を半角数字に変換 (例: ０ -> 0)
-        // 厳密には異なるので注意
+        // mb_convert_kanaは機能が多いため, 今回は半角数字に変換するnだけを使う
         $phoneNumberWithoutFullWidthDigit = mb_convert_kana($phoneNumber->value, 'n');
 
-        $normalizedInputPhoneNumber = preg_replace(
-            pattern: '/[^0-9\-]/',
-            replacement: '',
-            subject: $phoneNumberWithoutFullWidthDigit
-        );
+        $phoneNumberWithoutFullwidthHyphen = str_replace('ー', '', $phoneNumberWithoutFullWidthDigit);
 
-        $this->value = $normalizedInputPhoneNumber;
+        $this->value = $phoneNumberWithoutFullwidthHyphen;
     }
 }
 
@@ -76,6 +73,7 @@ readonly class MobilePhoneNumber implements PhoneNumberInterface
 readonly class ServiceProviderNumber implements PhoneNumberInterface
 {
     public string $phoneNumber;
+
     public function __construct(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber)
     {
         if (self::matchFormat($phoneNumber) === false) {
