@@ -104,7 +104,7 @@ readonly class PhoneNumberFactory
      * @param NormalizedInputPhoneNumber $phoneNumber
      * @return MobilePhoneNumber|ServiceProviderNumber
      */
-    public static function createPhoneNumber(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): MobilePhoneNumber|ServiceProviderNumber
+    public static function create(#[SensitiveParameter] NormalizedInputPhoneNumber $phoneNumber): MobilePhoneNumber|ServiceProviderNumber
     {
         // [good] regexを確認するUnitな関数を並べておくとテストしやすい
         // (補足) function(function(function(string text)))のようにネストするとテストが難しい
