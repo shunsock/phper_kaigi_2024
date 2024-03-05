@@ -67,7 +67,7 @@ readonly class MobilePhoneNumber implements PhoneNumberInterface
     {
         // [good] NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
         // [good] この関数は半角数字とハイフンの並び順だけを判断する
-        $mobilePhoneNumberFormat = '/^[0-9]{3}\-[0-9]{4}\-[0-9]{4}$/';
+        $mobilePhoneNumberFormat = '/^[0-9]{3}-[0-9]{4}-[0-9]{4}$/';
         $is_valid = preg_match($mobilePhoneNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
@@ -92,7 +92,7 @@ readonly class ServiceProviderNumber implements PhoneNumberInterface
     {
         // [good] NormalizedInputPhoneNumberのvalueは半角数字とハイフンのみ
         // [good] この関数は半角数字とハイフンの並び順だけを判断する
-        $serviceProviderNumberFormat = '/^[0-9]{4}\-[0-9]{3}\-[0-9]{3}$/';
+        $serviceProviderNumberFormat = '/^[0-9]{4}-[0-9]{3}-[0-9]{3}$/';
         $is_valid = preg_match($serviceProviderNumberFormat, $phoneNumber->value);
         return $is_valid === 1;
     }
