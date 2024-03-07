@@ -30,7 +30,7 @@ readonly class NormalizedInputPhoneNumber
         // mb_convert_kanaは機能が多いため, 今回は半角数字に変換するnだけを使う
         $phoneNumberWithoutFullWidthDigit = mb_convert_kana($phoneNumber->value, 'n');
 
-        $phoneNumberWithoutFullwidthHyphen = str_replace('ー', '', $phoneNumberWithoutFullWidthDigit);
+        $phoneNumberWithoutFullwidthHyphen = str_replace('ー', '-', $phoneNumberWithoutFullWidthDigit);
 
         $this->value = $phoneNumberWithoutFullwidthHyphen;
     }
